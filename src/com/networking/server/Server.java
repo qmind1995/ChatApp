@@ -1,6 +1,5 @@
 package com.networking.server;
 
-import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -8,7 +7,7 @@ import java.net.Socket;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import com.netwoking.tags.Tags;
+import com.networking.tags.Tags;
 
 public class Server {
 
@@ -16,6 +15,7 @@ public class Server {
 	private JSONObject accountClient;
 	private ServerSocket server;
 	Socket connection;
+	ObjectOutputStream obOutputClient;
 	public boolean isStop = false;
 
 	// ArrayList<Socket> serverSocket;// serverSocket for 1 client connect
@@ -69,6 +69,12 @@ public class Server {
 
 	private void waitForConnection() throws Exception {
 		connection = server.accept();
+		obOutputClient = new ObjectOutputStream(connection.getOutputStream());
+		obOutputClient.writeObject(connection.getPort());
+		ServerApp.updateMessage("Client: "
+				+ connection.getInetAddress().toString());
+		ServerApp.updateMessage("Client: "
+				+ Integer.toString(connection.getPort()));
 		ServerApp.updateNumberClient();
 	}
 

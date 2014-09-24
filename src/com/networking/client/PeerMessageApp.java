@@ -11,22 +11,25 @@ import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.awt.Color;
 
-public class ClientApp {
+public class PeerMessageApp {
 
+	private Peer peerNode;
 	private String portClient = "", IPClient = "";
 	private JFrame frame;
 	private JTextField textIP;
 	private JTextField textPort;
 	private TextArea textSend;
-	private TextArea textDisPlayChat;
+	private static TextArea textDisPlayChat;
 	private JButton btnConnect;
 	private JLabel lblFailed;
+	private JTextField peerIP;
+	private JTextField peerPORT;
 
 	public static void main(String[] args) {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					ClientApp window = new ClientApp();
+					PeerMessageApp window = new PeerMessageApp();
 					window.frame.setVisible(true);
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -35,14 +38,18 @@ public class ClientApp {
 		});
 	}
 
-	public ClientApp() {
+	public static void updateChat(String msg) {
+		textDisPlayChat.append(msg + "\n");
+	}
+
+	public PeerMessageApp() {
 		initialize();
 	}
 
 	private void initialize() {
 		frame = new JFrame();
 		frame.setResizable(false);
-		frame.setBounds(100, 100, 603, 398);
+		frame.setBounds(100, 100, 600, 466);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 
@@ -74,7 +81,26 @@ public class ClientApp {
 		frame.getContentPane().add(textSend);
 
 		JButton btnSend = new JButton("Send");
-		btnSend.setBounds(503, 302, 94, 64);
+		btnSend.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				try {
+					System.out.print("Send");
+					IPClient = peerIP.getText();
+					portClient = peerPORT.getText();
+					if (!IPClient.equals("") && !portClient.equals("")) {
+						peerNode.connectPeer(IPClient, portClient,
+								textSend.getText());
+						PeerMessageApp.updateChat(textSend.getText());
+						textSend.setText("");
+					} else
+						PeerMessageApp.updateChat("NOT CONNECT");
+				} catch (Exception e) {
+					PeerMessageApp.updateChat("NOT CONNECT");
+					e.printStackTrace();
+				}
+			}
+		});
+		btnSend.setBounds(499, 302, 94, 64);
 		frame.getContentPane().add(btnSend);
 
 		btnConnect = new JButton("Connect");
@@ -89,8 +115,9 @@ public class ClientApp {
 					lblFailed.setVisible(true);
 				else {
 					try {
-						new Client(IPClient, portClient);
+						peerNode = new Peer(IPClient, portClient);
 					} catch (Exception e1) {
+						lblFailed.setVisible(true);
 						e1.printStackTrace();
 					}
 				}
@@ -104,5 +131,27 @@ public class ClientApp {
 		lblFailed.setBounds(282, 12, 289, 16);
 		lblFailed.setVisible(false);
 		frame.getContentPane().add(lblFailed);
+
+		JButton btnDisConnect = new JButton("DisConnect");
+		btnDisConnect.setBounds(476, 47, 117, 29);
+		frame.getContentPane().add(btnDisConnect);
+
+		JLabel lblPeerConnectIp = new JLabel("Peer Connect IP :");
+		lblPeerConnectIp.setBounds(6, 384, 117, 16);
+		frame.getContentPane().add(lblPeerConnectIp);
+
+		JLabel lblPeerConnectPort = new JLabel("Peer Connect PORT :");
+		lblPeerConnectPort.setBounds(6, 412, 134, 16);
+		frame.getContentPane().add(lblPeerConnectPort);
+
+		peerIP = new JTextField();
+		peerIP.setColumns(10);
+		peerIP.setBounds(140, 378, 162, 28);
+		frame.getContentPane().add(peerIP);
+
+		peerPORT = new JTextField();
+		peerPORT.setColumns(10);
+		peerPORT.setBounds(140, 412, 162, 28);
+		frame.getContentPane().add(peerPORT);
 	}
 }

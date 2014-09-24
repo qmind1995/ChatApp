@@ -1,4 +1,4 @@
-package com.netwoking.tags;
+package com.networking.tags;
 
 public class Tags {
 	public static int MAX_MSG_SIZE = 1024;
