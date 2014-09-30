@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
+
 import java.awt.TextArea;
 
 public class ServerApp {
@@ -22,6 +23,7 @@ public class ServerApp {
 	Server server;
 
 	public static void main(String[] args) {
+		System.out.print(System.currentTimeMillis());
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -54,7 +56,7 @@ public class ServerApp {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 
-		JLabel lblIP = new JLabel(" HOST :");
+		JLabel lblIP = new JLabel("HOST :");
 		lblIP.setBounds(6, 12, 61, 16);
 		frame.getContentPane().add(lblIP);
 
@@ -124,7 +126,6 @@ public class ServerApp {
 					ServerApp.updateMessage("START ERROR");
 					e.printStackTrace();
 				}
-
 			}
 		});
 	}

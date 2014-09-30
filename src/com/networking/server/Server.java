@@ -1,64 +1,50 @@
 package com.networking.server;
 
+import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
+import com.netwoking.data.DataPeer;
+import com.networking.tags.DeCode;
 import com.networking.tags.Tags;
 
 public class Server {
 
-	private static String ACCOUNT = "ACCOUNT";
-	private JSONObject accountClient;
+	private ArrayList<DataPeer> dataPeer = null;
 	private ServerSocket server;
-	Socket connection;
-	ObjectOutputStream obOutputClient;
+	private Socket connection;
+	private ObjectOutputStream obOutputClient;
+	private ObjectInputStream obInputStream;
 	public boolean isStop = false;
-
-	// ArrayList<Socket> serverSocket;// serverSocket for 1 client connect
 
 	public Server(int port) throws Exception {
 		server = new ServerSocket(port);
-		accountClient = new JSONObject();
+		dataPeer = new ArrayList<DataPeer>();
 		(new WaitForConnect()).start();
 	}
 
-	@SuppressWarnings("unused")
-	private void sendSessionAccept(int position, String userName)
-			throws Exception {
+	private String sendSessionAccept() throws Exception {
 		String msg = Tags.SESSION_ACCEPT_OPEN_TAG;
-		boolean isFound = false;
-		JSONArray arrayAccount = accountClient.getJSONArray(ACCOUNT);
-		int size = arrayAccount.length();
+		int size = dataPeer.size();
 		for (int i = 0; i < size; i++) {
+			DataPeer peer = dataPeer.get(i);
 			msg += Tags.PEER_OPEN_TAG;
-			JSONObject account = arrayAccount.getJSONObject(i);
-			if (account.getString(Tags.PEER_NAME_OPEN_TAG).equals(userName)) {
-				isFound = true;
-				break;
-			}
 			msg += Tags.PEER_NAME_OPEN_TAG;
-			msg += account.getString(Tags.PEER_NAME_OPEN_TAG);
+			msg += peer.getName();
 			msg += Tags.PEER_NAME_CLOSE_TAG;
 			msg += Tags.IP_OPEN_TAG;
-			msg += account.getString(Tags.IP_OPEN_TAG);
+			msg += peer.getHost();
 			msg += Tags.IP_CLOSE_TAG;
 			msg += Tags.PORT_OPEN_TAG;
-			msg += account.getString(Tags.PORT_OPEN_TAG);
+			msg += peer.getPort();
 			msg += Tags.PORT_CLOSE_TAG;
 			msg += Tags.PEER_CLOSE_TAG;
 		}
 		msg += Tags.SESSION_ACCEPT_CLOSE_TAG;
-		/*
-		 * ObjectOutputStream out = new ObjectOutputStream(
-		 * connection.getOutputStream()); if (isFound) { out.writeObject(msg);
-		 * objectOut.add(out); } else { msg = Tags.SESSION_DENY_TAG;
-		 * out.writeObject(msg); // serverSocket.get(position).close();
-		 * out.flush(); // serverSocket.remove(position); }
-		 */
+		ServerApp.updateMessage("FeedBack : " + msg);
+		return msg;
 	}
 
 	public void stopServer() throws Exception {
@@ -67,20 +53,41 @@ public class Server {
 		connection.close();
 	}
 
-	private void waitForConnection() throws Exception {
+	private boolean waitForConnection() throws Exception {
 		connection = server.accept();
-		obOutputClient = new ObjectOutputStream(connection.getOutputStream());
-		obOutputClient.writeObject(connection.getPort());
-		ServerApp.updateMessage("Client: "
-				+ connection.getInetAddress().toString());
-		ServerApp.updateMessage("Client: "
-				+ Integer.toString(connection.getPort()));
-		ServerApp.updateNumberClient();
+		obInputStream = new ObjectInputStream(connection.getInputStream());
+		String msg = (String) obInputStream.readObject();
+		ArrayList<String> getData = DeCode.getUser(msg);
+		ServerApp.updateMessage(msg);
+		if (getData != null) {
+			if (!isExsistName(getData.get(0))) {
+				saveNewPeer(getData.get(0), connection.getInetAddress()
+						.toString(), Integer.parseInt(getData.get(1)));
+				ServerApp.updateMessage(getData.get(0));
+			} else
+				return false;
+		}
+		return true;
 	}
 
-	@SuppressWarnings("unused")
-	private String getUserName(String msg) {
-		return null;
+	private void saveNewPeer(String user, String ip, int port) throws Exception {
+		DataPeer newPeer = new DataPeer();
+		if (dataPeer.size() == 0)
+			dataPeer = new ArrayList<DataPeer>();
+		newPeer.setPeer(user, ip, port);
+		dataPeer.add(newPeer);
+	}
+
+	private boolean isExsistName(String name) throws Exception {
+		if (dataPeer == null)
+			return false;
+		int size = dataPeer.size();
+		for (int i = 0; i < size; i++) {
+			DataPeer peer = dataPeer.get(i);
+			if (peer.getName().equals(name))
+				return true;
+		}
+		return false;
 	}
 
 	public class WaitForConnect extends Thread {
@@ -90,7 +97,19 @@ public class Server {
 			super.run();
 			try {
 				while (!isStop) {
-					waitForConnection();
+					if (waitForConnection()) {
+						obOutputClient = new ObjectOutputStream(
+								connection.getOutputStream());
+						obOutputClient.writeObject(sendSessionAccept());
+						obOutputClient.flush();
+						obOutputClient.close();
+					} else {
+						obOutputClient = new ObjectOutputStream(
+								connection.getOutputStream());
+						obOutputClient.writeObject(Tags.SESSION_DENY_TAG);
+						obOutputClient.flush();
+						obOutputClient.close();
+					}
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

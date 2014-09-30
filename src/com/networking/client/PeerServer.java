@@ -5,6 +5,8 @@ import java.io.ObjectInputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import com.networking.tags.DeCode;
+
 public class PeerServer {
 
 	private ServerSocket serverPeer;
@@ -15,8 +17,12 @@ public class PeerServer {
 		isStop = true;
 	}
 
-	public PeerServer(int portSocket) throws Exception {
-		port = portSocket;
+	public boolean getStop() {
+		return isStop;
+	}
+
+	public PeerServer() throws Exception {
+		port = Peer.getPort();
 		serverPeer = new ServerSocket(port);
 		(new WaitPeerConnect()).start();
 	}
@@ -34,8 +40,9 @@ public class PeerServer {
 					connection = serverPeer.accept();
 					getData = new ObjectInputStream(connection.getInputStream());
 					String msg = (String) getData.readObject();
+					String message = DeCode.getMessage(msg);
 					PeerMessageApp.updateChat(Integer.toString(connection
-							.getPort()) + "\t" + msg);
+							.getPort()) + "\t" + message);
 				} catch (Exception e) {
 					break;
 				}
