@@ -8,7 +8,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.ArrayList;
 
-import com.netwoking.data.DataPeer;
+import com.networking.data.DataPeer;
 import com.networking.tags.DeCode;
 import com.networking.tags.EnCode;
 import com.networking.tags.Tags;

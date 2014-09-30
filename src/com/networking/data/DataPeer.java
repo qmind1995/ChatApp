@@ -1,4 +1,4 @@
-package com.netwoking.data;
+package com.networking.data;
 
 public class DataPeer {
 
