@@ -10,6 +10,7 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
+import javax.swing.UIManager;
 
 import java.awt.TextArea;
 
@@ -23,7 +24,14 @@ public class ServerApp {
 	Server server;
 
 	public static void main(String[] args) {
-		System.out.print(System.currentTimeMillis());
+		com.jtattoo.plaf.acryl.AcrylLookAndFeel.setTheme("Green",
+				"INSERT YOUR LICENSE KEY HERE", "my company");
+		try {
+			UIManager
+					.setLookAndFeel("com.jtattoo.plaf.texture.TextureLookAndFeel");
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {

@@ -31,6 +31,13 @@ public class DeCode {
 	private static Pattern message = Pattern.compile(Tags.CHAT_MSG_OPEN_TAG
 			+ ".*" + Tags.CHAT_MSG_CLOSE_TAG);
 
+	private static Pattern checkNameFile = Pattern
+			.compile(Tags.FILE_REQ_OPEN_TAG + ".*" + Tags.FILE_REQ_CLOSE_TAG);
+
+	private static Pattern feedBack = Pattern
+			.compile(Tags.FILE_REQ_ACK_OPEN_TAG + ".*"
+					+ Tags.FILE_REQ_ACK_CLOSE_TAG);
+
 	public static ArrayList<String> getUser(String msg) {
 		ArrayList<String> user = new ArrayList<String>();
 		if (createAccount.matcher(msg).matches()) {
@@ -52,13 +59,11 @@ public class DeCode {
 				return null;
 		} else
 			return null;
-
 		return user;
 	}
 
 	public static ArrayList<DataPeer> getAllUser(String msg) {
 		ArrayList<DataPeer> user = new ArrayList<DataPeer>();
-		System.out.println(msg);
 		Pattern findPeer = Pattern.compile(Tags.PEER_OPEN_TAG
 				+ Tags.PEER_NAME_OPEN_TAG + "[^<>]*" + Tags.PEER_NAME_CLOSE_TAG
 				+ Tags.IP_OPEN_TAG + "[^<>]*" + Tags.IP_CLOSE_TAG
@@ -74,7 +79,6 @@ public class DeCode {
 			Matcher find = findPeer.matcher(msg);
 			while (find.find()) {
 				String peer = find.group(0);
-				System.out.println(peer);
 				String data = "";
 				DataPeer dataPeer = new DataPeer();
 				Matcher findInfo = findName.matcher(peer);
@@ -140,5 +144,35 @@ public class DeCode {
 			return message;
 		}
 		return null;
+	}
+
+	public static String getNameRequestChat(String msg) {
+		Pattern checkRequest = Pattern.compile(Tags.CHAT_REQ_OPEN_TAG
+				+ Tags.PEER_NAME_OPEN_TAG + "[^<>]*" + Tags.PEER_NAME_CLOSE_TAG
+				+ Tags.CHAT_REQ_CLOSE_TAG);
+		if (checkRequest.matcher(msg).matches()) {
+			int lenght = msg.length();
+			String name = msg
+					.substring(
+							(Tags.CHAT_REQ_OPEN_TAG + Tags.PEER_NAME_OPEN_TAG)
+									.length(),
+							lenght
+									- (Tags.PEER_NAME_CLOSE_TAG + Tags.CHAT_REQ_CLOSE_TAG)
+											.length());
+			return name;
+		}
+		return null;
+	}
+
+	public static boolean checkFile(String name) {
+		if (checkNameFile.matcher(name).matches())
+			return true;
+		return false;
+	}
+
+	public static boolean checkFeedBack(String msg) {
+		if (feedBack.matcher(msg).matches())
+			return true;
+		return false;
 	}
 }

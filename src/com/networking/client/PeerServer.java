@@ -2,13 +2,16 @@ package com.networking.client;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 import com.networking.tags.DeCode;
+import com.networking.tags.Tags;
 
 public class PeerServer {
 
+	private String userName = "";
 	private ServerSocket serverPeer;
 	private int port;
 	private static boolean isStop = false;
@@ -21,7 +24,8 @@ public class PeerServer {
 		return isStop;
 	}
 
-	public PeerServer() throws Exception {
+	public PeerServer(String name) throws Exception {
+		userName = name;
 		port = Peer.getPort();
 		serverPeer = new ServerSocket(port);
 		(new WaitPeerConnect()).start();
@@ -30,7 +34,7 @@ public class PeerServer {
 	class WaitPeerConnect extends Thread {
 
 		Socket connection;
-		ObjectInputStream getData;
+		ObjectInputStream getRequest;
 
 		@Override
 		public void run() {
@@ -38,11 +42,20 @@ public class PeerServer {
 			while (!isStop) {
 				try {
 					connection = serverPeer.accept();
-					getData = new ObjectInputStream(connection.getInputStream());
-					String msg = (String) getData.readObject();
-					String message = DeCode.getMessage(msg);
-					PeerMessageApp.updateChat(Integer.toString(connection
-							.getPort()) + "\t" + message);
+					getRequest = new ObjectInputStream(
+							connection.getInputStream());
+					String msg = (String) getRequest.readObject();
+					String name = DeCode.getNameRequestChat(msg);
+					int result = ContractApp.request(name, true);
+					ObjectOutputStream send = new ObjectOutputStream(
+							connection.getOutputStream());
+					if (result == 0) {
+						send.writeObject(Tags.CHAT_ACCEPT_TAG);
+						new ChatApp(userName, name, connection, port);
+					} else if (result == 1) {
+						send.writeObject(Tags.CHAT_DENY_TAG);
+					}
+					send.flush();
 				} catch (Exception e) {
 					break;
 				}

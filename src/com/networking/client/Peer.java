@@ -15,8 +15,8 @@ import com.networking.tags.Tags;
 
 public class Peer {
 
-	private long timeRequest = 0;
-	private ArrayList<DataPeer> peer = null;
+	//private long timeRequest = 0;
+	public static ArrayList<DataPeer> peer = null;
 	private PeerServer server;
 	private InetAddress ipServer;
 	private int portServer = 8080;
@@ -26,7 +26,6 @@ public class Peer {
 	private Socket socketClient;
 	private ObjectInputStream serverInputStream;
 	private ObjectOutputStream serverOutputStream;
-	private ObjectOutputStream peerOutputStream;
 
 	public Peer(String arg, int arg1, String name, String dataUser)
 			throws Exception {
@@ -41,7 +40,7 @@ public class Peer {
 				updateFiend();
 			}
 		}).start();
-		server = new PeerServer();
+		server = new PeerServer(nameUser);
 		(new Request()).start();
 	}
 
@@ -73,47 +72,51 @@ public class Peer {
 	}
 
 	public class Request extends Thread {
-
 		@Override
 		public void run() {
 			super.run();
-			timeRequest = System.currentTimeMillis();
+			// timeRequest = System.currentTimeMillis();
 			while (!server.getStop()) {
-				long time = System.currentTimeMillis();
-				int getTime = ((int) (time - timeRequest) / 1000);
-				if (getTime >= 15)
-					try {
-						request();
-						timeRequest = time;
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
+				try {
+					Thread.sleep(15000);
+					request();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				/*
+				 * long time = System.currentTimeMillis(); int getTime = ((int)
+				 * (time - timeRequest) / 1000); if (getTime >= 15) try {
+				 * request(); timeRequest = time; } catch (Exception e) {
+				 * e.printStackTrace(); }
+				 */
 			}
 		}
 	}
 
-	public void sendMessage(String msg) throws Exception {
-		String message = EnCode.sendMessage(msg);
-		int size = peer.size();
-		for (int i = 0; i < size; i++) {
-			if (!nameUser.equals(peer.get(i).getName())) {
-				Socket socketPeer = new Socket(InetAddress.getByName(peer
-						.get(i).getHost()), peer.get(i).getPort());
-				peerOutputStream = new ObjectOutputStream(
-						socketPeer.getOutputStream());
-				peerOutputStream.writeObject(message);
-				peerOutputStream.flush();
-				socketPeer.close();
-			}
+	public void requestChat(String IP, int host, String guest) throws Exception {
+		final Socket connPeer = new Socket(InetAddress.getByName(IP), host);
+		ObjectOutputStream sendrequestChat = new ObjectOutputStream(
+				connPeer.getOutputStream());
+		sendrequestChat.writeObject(EnCode.sendRequestChat(nameUser));
+		sendrequestChat.flush();
+		ObjectInputStream receivedChat = new ObjectInputStream(
+				connPeer.getInputStream());
+		String msg = (String) receivedChat.readObject();
+		if (msg.equals(Tags.CHAT_DENY_TAG)) {
+			ContractApp.request("My Friend Busy", false);
+			connPeer.close();
+			return;
+		} else {
+			new ChatApp(nameUser, guest, connPeer, portPeer);
 		}
-		PeerMessageApp.updateChat(msg);
+		// TO DO SOMETHING
 	}
 
 	public void updateFiend() {
 		int size = peer.size();
-		PeerMessageApp.clearAll();
+		ContractApp.clearAll();
 		for (int i = 0; i < size; i++)
 			if (!peer.get(i).getName().equals(nameUser))
-				PeerMessageApp.updateFiend(peer.get(i).getName());
+				ContractApp.updateFiend(peer.get(i).getName());
 	}
 }

@@ -1,5 +1,8 @@
 package com.networking.tags;
 
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+
 public class Tags {
 
 	public static int IN_VALID = -1;
@@ -43,6 +46,7 @@ public class Tags {
 	public static String SERVER_ONLINE = "ALIVE";
 	public static String SERVER_OFFLINE = "OOPS >>>WILL BE KILLED<<< ";
 
+	@SuppressWarnings("unused")
 	private static int equalData(String msg) {
 		if (msg.equals(""))
 			return IN_VALID;
@@ -115,15 +119,11 @@ public class Tags {
 		return IN_VALID;
 	}
 
-	public static int getTags(String msg) {
-		if (msg.charAt(0) != '<')
-			return IN_VALID;
-		String tags = "";
-		for (int i = 0;; i++) {
-			if (msg.charAt(0) != '>')
-				break;
-			tags += msg.charAt(i);
-		}
-		return equalData(tags);
+	public static int show(JFrame frame, String msg, boolean type) {
+		if (type)
+			return JOptionPane.showConfirmDialog(frame, msg, null,
+					JOptionPane.YES_NO_OPTION);
+		JOptionPane.showMessageDialog(frame, msg);
+		return IN_VALID;
 	}
 }

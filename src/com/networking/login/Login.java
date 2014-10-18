@@ -8,8 +8,9 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.JButton;
+import javax.swing.UIManager;
 
-import com.networking.client.PeerMessageApp;
+import com.networking.client.ContractApp;
 import com.networking.tags.EnCode;
 import com.networking.tags.Tags;
 
@@ -24,18 +25,27 @@ public class Login {
 
 	private static String NAME_FAILED = "CONNECT WITH OTHER NAME";
 	private static String NAME_EXSIST = "NAME IS EXSISED";
+	private static String SERVER_NOT_START = "SERVER NOT START";
 
 	private Pattern checkName = Pattern.compile("[a-zA-Z][^<>]*");
 
 	private JFrame frame;
 	private JTextField textField_1;
-	private JButton btnLogin;
 	private JLabel lblError;
 	private String name = "", IP = "";
 	private JTextField textIP;
 	private JTextField textName;
+	private JButton btnLogin;
 
 	public static void main(String[] args) {
+		com.jtattoo.plaf.acryl.AcrylLookAndFeel.setTheme("Green",
+				"INSERT YOUR LICENSE KEY HERE", "my company");
+		try {
+			UIManager
+					.setLookAndFeel("com.jtattoo.plaf.texture.TextureLookAndFeel");
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
@@ -75,14 +85,28 @@ public class Login {
 		textField_1.setText("8080");
 		textField_1.setEditable(false);
 		textField_1.setColumns(10);
-		textField_1.setBounds(356, 50, 86, 20);
+		textField_1.setBounds(356, 50, 65, 20);
 		frame.getContentPane().add(textField_1);
 
 		JLabel lblNewLabel = new JLabel("User Name: ");
 		lblNewLabel.setBounds(10, 82, 86, 17);
 		frame.getContentPane().add(lblNewLabel);
 
-		btnLogin = new JButton("Login");
+		lblError = new JLabel("");
+		lblError.setBounds(10, 141, 380, 14);
+		frame.getContentPane().add(lblError);
+
+		textIP = new JTextField();
+		textIP.setBounds(101, 46, 152, 28);
+		frame.getContentPane().add(textIP);
+		textIP.setColumns(10);
+
+		textName = new JTextField();
+		textName.setColumns(10);
+		textName.setBounds(101, 76, 152, 28);
+		frame.getContentPane().add(textName);
+
+		btnLogin = new JButton("LOGIN");
 		btnLogin.addActionListener(new ActionListener() {
 
 			public void actionPerformed(ActionEvent arg0) {
@@ -111,10 +135,11 @@ public class Login {
 							lblError.setVisible(true);
 							return;
 						}
-						PeerMessageApp window = new PeerMessageApp(IP,
-								portPeer, name, msg);
+						new ContractApp(IP, portPeer, name, msg);
 						frame.dispose();
 					} catch (Exception e) {
+						lblError.setText(SERVER_NOT_START);
+						lblError.setVisible(true);
 						e.printStackTrace();
 					}
 				} else {
@@ -124,22 +149,8 @@ public class Login {
 				}
 			}
 		});
-		btnLogin.setBounds(273, 79, 169, 23);
+		btnLogin.setBounds(263, 78, 169, 29);
 		frame.getContentPane().add(btnLogin);
-
-		lblError = new JLabel("");
-		lblError.setBounds(10, 141, 380, 14);
-		frame.getContentPane().add(lblError);
-
-		textIP = new JTextField();
-		textIP.setBounds(101, 46, 152, 28);
-		frame.getContentPane().add(textIP);
-		textIP.setColumns(10);
-
-		textName = new JTextField();
-		textName.setColumns(10);
-		textName.setBounds(101, 76, 152, 28);
-		frame.getContentPane().add(textName);
 		lblError.setVisible(false);
 	}
 }
