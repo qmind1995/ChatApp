@@ -17,7 +17,7 @@ public class Server {
 	private Socket connection;
 	private ObjectOutputStream obOutputClient;
 	private ObjectInputStream obInputStream;
-	public boolean isStop = false;
+	public boolean isStop = false, isExit = false;
 
 	public Server(int port) throws Exception {
 		server = new ServerSocket(port);
@@ -43,7 +43,6 @@ public class Server {
 			msg += Tags.PEER_CLOSE_TAG;
 		}
 		msg += Tags.SESSION_ACCEPT_CLOSE_TAG;
-		ServerApp.updateMessage("FeedBack : " + msg);
 		return msg;
 	}
 
@@ -66,6 +65,12 @@ public class Server {
 				ServerApp.updateMessage(getData.get(0));
 			} else
 				return false;
+		} else {
+			int size = dataPeer.size();
+			DeCode.updatePeerOnline(dataPeer, msg);
+			if (size != dataPeer.size()) {
+				isExit = true;
+			}
 		}
 		return true;
 	}
@@ -98,11 +103,15 @@ public class Server {
 			try {
 				while (!isStop) {
 					if (waitForConnection()) {
-						obOutputClient = new ObjectOutputStream(
-								connection.getOutputStream());
-						obOutputClient.writeObject(sendSessionAccept());
-						obOutputClient.flush();
-						obOutputClient.close();
+						if (isExit) {
+							isExit = false;
+						} else {
+							obOutputClient = new ObjectOutputStream(
+									connection.getOutputStream());
+							obOutputClient.writeObject(sendSessionAccept());
+							obOutputClient.flush();
+							obOutputClient.close();
+						}
 					} else {
 						obOutputClient = new ObjectOutputStream(
 								connection.getOutputStream());
@@ -117,5 +126,3 @@ public class Server {
 		}
 	}
 }
-
-// private static String WORKINK_DIR = System.getProperty("user.dir");

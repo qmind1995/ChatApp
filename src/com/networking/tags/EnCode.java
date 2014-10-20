@@ -13,10 +13,11 @@ public class EnCode {
 				+ Tags.PORT_CLOSE_TAG + Tags.SESSION_CLOSE_TAG;
 	}
 
-	public static String sendRequest(String name, String status) {
+	public static String sendRequest(String name) {
 		return Tags.SESSION_KEEP_ALIVE_OPEN_TAG + Tags.PEER_NAME_OPEN_TAG
 				+ name + Tags.PEER_NAME_CLOSE_TAG + Tags.STATUS_OPEN_TAG
-				+ status + Tags.STATUS_CLOSE_TAG;
+				+ Tags.SERVER_ONLINE + Tags.STATUS_CLOSE_TAG
+				+ Tags.SESSION_KEEP_ALIVE_CLOSE_TAG;
 	}
 
 	public static String sendMessage(String message) {
@@ -43,5 +44,12 @@ public class EnCode {
 
 	public static String sendFile(String name) {
 		return Tags.FILE_REQ_OPEN_TAG + name + Tags.FILE_REQ_CLOSE_TAG;
+	}
+
+	public static String exit(String name) {
+		return Tags.SESSION_KEEP_ALIVE_OPEN_TAG + Tags.PEER_NAME_OPEN_TAG
+				+ name + Tags.PEER_NAME_CLOSE_TAG + Tags.STATUS_OPEN_TAG
+				+ Tags.SERVER_OFFLINE + Tags.STATUS_CLOSE_TAG
+				+ Tags.SESSION_KEEP_ALIVE_CLOSE_TAG;
 	}
 }

@@ -1,5 +1,6 @@
 package com.networking.client;
 
+import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.InetAddress;
@@ -15,13 +16,12 @@ import com.networking.tags.Tags;
 
 public class Peer {
 
-	//private long timeRequest = 0;
 	public static ArrayList<DataPeer> peer = null;
 	private PeerServer server;
 	private InetAddress ipServer;
 	private int portServer = 8080;
 	private String nameUser = "";
-
+	private boolean isStop = false;
 	private static int portPeer = 10000;
 	private Socket socketClient;
 	private ObjectInputStream serverInputStream;
@@ -53,7 +53,7 @@ public class Peer {
 		SocketAddress addressServer = new InetSocketAddress(ipServer,
 				portServer);
 		socketClient.connect(addressServer);
-		String msg = EnCode.sendRequest(nameUser, Tags.SERVER_ONLINE);
+		String msg = EnCode.sendRequest(nameUser);
 		serverOutputStream = new ObjectOutputStream(
 				socketClient.getOutputStream());
 		serverOutputStream.writeObject(msg);
@@ -75,20 +75,13 @@ public class Peer {
 		@Override
 		public void run() {
 			super.run();
-			// timeRequest = System.currentTimeMillis();
-			while (!server.getStop()) {
+			while (!isStop) {
 				try {
 					Thread.sleep(15000);
 					request();
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				/*
-				 * long time = System.currentTimeMillis(); int getTime = ((int)
-				 * (time - timeRequest) / 1000); if (getTime >= 15) try {
-				 * request(); timeRequest = time; } catch (Exception e) {
-				 * e.printStackTrace(); }
-				 */
 			}
 		}
 	}
@@ -103,13 +96,28 @@ public class Peer {
 				connPeer.getInputStream());
 		String msg = (String) receivedChat.readObject();
 		if (msg.equals(Tags.CHAT_DENY_TAG)) {
-			ContractApp.request("My Friend Busy", false);
+			ContractApp.request("May be your friend busy!", false);
 			connPeer.close();
 			return;
 		} else {
 			new ChatApp(nameUser, guest, connPeer, portPeer);
 		}
 		// TO DO SOMETHING
+	}
+
+	public void exit() throws IOException, ClassNotFoundException {
+		isStop = true;
+		socketClient = new Socket();
+		SocketAddress addressServer = new InetSocketAddress(ipServer,
+				portServer);
+		socketClient.connect(addressServer);
+		String msg = EnCode.exit(nameUser);
+		serverOutputStream = new ObjectOutputStream(
+				socketClient.getOutputStream());
+		serverOutputStream.writeObject(msg);
+		serverOutputStream.flush();
+		serverOutputStream.close();
+		server.exit();
 	}
 
 	public void updateFiend() {

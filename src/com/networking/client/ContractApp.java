@@ -21,7 +21,7 @@ public class ContractApp {
 	private Peer peerNode;
 	private static String IPClient = "", nameUser = "", dataUser = "";
 	private static int portClient = 0;
-	private static JFrame frame;
+	private JFrame frame;
 	private JTextField textName, textNameFriend;
 	private static TextArea textList;
 	private JButton btnChat, btnExit;
@@ -83,7 +83,7 @@ public class ContractApp {
 		frame = new JFrame();
 		frame.setResizable(false);
 		frame.setBounds(100, 100, 293, 556);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		frame.getContentPane().setLayout(null);
 
 		textName = new JTextField(nameUser);
@@ -103,12 +103,12 @@ public class ContractApp {
 		frame.getContentPane().add(textList);
 
 		JLabel lblFriendsName = new JLabel("Friend 's Name: ");
-		lblFriendsName.setBounds(10, 445, 94, 16);
+		lblFriendsName.setBounds(10, 445, 110, 16);
 		frame.getContentPane().add(lblFriendsName);
 
 		textNameFriend = new JTextField("");
 		textNameFriend.setColumns(10);
-		textNameFriend.setBounds(114, 439, 162, 28);
+		textNameFriend.setBounds(130, 439, 146, 28);
 		frame.getContentPane().add(textNameFriend);
 
 		btnChat = new JButton("Chat");
@@ -118,11 +118,11 @@ public class ContractApp {
 			public void actionPerformed(ActionEvent arg0) {
 				String name = textNameFriend.getText();
 				if (name.equals("") || Peer.peer == null) {
-					Tags.show(frame, "NAME 'S FRIEND ERROR", false);
+					Tags.show(frame, "Name 's friend mistake!", false);
 					return;
 				}
 				if (name.equals(nameUser)) {
-					Tags.show(frame, "YOU CAN'T CHAT WITH YOURSELF", false);
+					Tags.show(frame, "You can't chat with yourself ><", false);
 					return;
 				}
 				int size = Peer.peer.size();
@@ -143,11 +143,25 @@ public class ContractApp {
 		btnChat.setBounds(10, 478, 113, 29);
 		frame.getContentPane().add(btnChat);
 		btnExit = new JButton("Exit");
+		btnExit.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int result = Tags.show(frame, "Do you want exit now?", true);
+				if (result == 0) {
+					try {
+						peerNode.exit();
+						frame.dispose();
+					} catch (Exception e) {
+						frame.dispose();
+					}
+				}
+			}
+		});
 		btnExit.setBounds(163, 478, 113, 29);
 		frame.getContentPane().add(btnExit);
 	}
 
 	public static int request(String msg, boolean type) {
-		return Tags.show(frame, msg, type);
+		JFrame frameMessage = new JFrame();
+		return Tags.show(frameMessage, msg, type);
 	}
 }

@@ -14,7 +14,7 @@ public class PeerServer {
 	private String userName = "";
 	private ServerSocket serverPeer;
 	private int port;
-	private static boolean isStop = false;
+	private boolean isStop = false;
 
 	public void stopServerPeer() {
 		isStop = true;
@@ -29,6 +29,11 @@ public class PeerServer {
 		port = Peer.getPort();
 		serverPeer = new ServerSocket(port);
 		(new WaitPeerConnect()).start();
+	}
+	
+	public void exit() throws IOException {
+		isStop = true;
+		serverPeer.close();
 	}
 
 	class WaitPeerConnect extends Thread {
@@ -46,7 +51,7 @@ public class PeerServer {
 							connection.getInputStream());
 					String msg = (String) getRequest.readObject();
 					String name = DeCode.getNameRequestChat(msg);
-					int result = ContractApp.request(name, true);
+					int result = ContractApp.request("Would you like chat with " + name, true);
 					ObjectOutputStream send = new ObjectOutputStream(
 							connection.getOutputStream());
 					if (result == 0) {

@@ -9,9 +9,6 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
-
-import java.awt.TextArea;
-
 import javax.swing.JButton;
 
 import com.networking.data.DataFile;
@@ -21,35 +18,43 @@ import com.networking.tags.Tags;
 
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.Label;
+import java.awt.TextArea;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-
 import javax.swing.JProgressBar;
-
-import java.awt.Label;
+import javax.swing.JPanel;
 
 public class ChatApp {
 
 	private static String URL_DIR = System.getProperty("user.dir");
+	private static String TEMP = "/temp/";
 
 	private ChatRoom chat;
 	private Socket socketChat;
 	private String nameUser = "", nameGuest = "", nameFile = "";
 	private JFrame frame;
 	private JTextField textName;
-	private Label textState;
-	private TextArea textSend, textDisPlayChat;
-	private JButton btnDisConnect, btnSend, btnChoose, btnDel;
+	private JPanel panelMessage;
+	private Label textState, lblReceive;
+	private TextArea textDisPlayChat;
+	private JButton btnDisConnect, btnSend, btnChoose, btnDel, btnUpLoad;
 	public boolean isStop = false, isSendFile = false, isReceiveFile = false;
 	private JProgressBar progressSendFile;
 	private JTextField textPath;
 	private int portServer = 0;
+	private JTextField textSend;
+	private JPanel panelFile;
 
 	public ChatApp(String user, String guest, Socket socket, int port) {
 		nameUser = user;
@@ -118,9 +123,13 @@ public class ChatApp {
 	}
 
 	private void initialize() {
+		File fileTemp = new File(URL_DIR + "/temp");
+		if (!fileTemp.exists()) {
+			fileTemp.mkdirs();
+		}
 		frame = new JFrame();
 		frame.setResizable(false);
-		frame.setBounds(100, 100, 588, 538);
+		frame.setBounds(100, 100, 588, 559);
 		frame.getContentPane().setLayout(null);
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
@@ -140,86 +149,65 @@ public class ChatApp {
 		textDisPlayChat.setBounds(6, 40, 568, 317);
 		frame.getContentPane().add(textDisPlayChat);
 
-		textSend = new TextArea();
-		textSend.setBounds(6, 363, 481, 73);
-		frame.getContentPane().add(textSend);
+		panelFile = new JPanel();
+		panelFile.setBounds(6, 439, 568, 60);
+		panelFile.setBorder(BorderFactory.createTitledBorder(
+				BorderFactory.createEtchedBorder(), "File"));
+		frame.getContentPane().add(panelFile);
+		panelFile.setLayout(null);
 
-		btnSend = new JButton("SEND");
-		btnSend.addActionListener(new ActionListener() {
-
-			public void actionPerformed(ActionEvent arg0) {
-				if (!isSendFile) {
-					final String msg = textSend.getText();
-					if (msg.equals(""))
-						return;
-					try {
-						chat.sendMessage(msg);
-						textSend.setText("");
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				} else {
-					try {
-						chat.sendMessage(EnCode.sendFile(nameFile));
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-			}
-		});
-		btnSend.setBounds(493, 363, 81, 72);
-		frame.getContentPane().add(btnSend);
-
-		btnDisConnect = new JButton("CLOSE");
-		btnDisConnect.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent arg0) {
-				frame.dispose();
-			}
-		});
-		btnDisConnect.setBounds(461, 6, 113, 29);
-		frame.getContentPane().add(btnDisConnect);
-
-		progressSendFile = new JProgressBar(0, 100);
-		progressSendFile.setBounds(93, 485, 481, 14);
-		progressSendFile.setStringPainted(true);
-		frame.getContentPane().add(progressSendFile);
-		progressSendFile.setVisible(false);
+		textPath = new JTextField("");
+		textPath.setBounds(65, 21, 388, 25);
+		panelFile.add(textPath);
+		textPath.setEditable(false);
+		textPath.setColumns(10);
 
 		btnChoose = new JButton(new ImageIcon(this.getClass().getResource(
-				"/Attach_icon.png")));
+				"/Attach_file.png")));
+		btnChoose.setBounds(463, 21, 25, 25);
+		panelFile.add(btnChoose);
 		btnChoose.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				JFileChooser fileChooser = new JFileChooser();
 				fileChooser.setCurrentDirectory(new File(System
 						.getProperty("user.home")));
+				fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
 				int result = fileChooser.showOpenDialog(frame);
-				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 				if (result == JFileChooser.APPROVE_OPTION) {
 					isSendFile = true;
 					String path_send = fileChooser.getSelectedFile()
 							.getAbsolutePath();
+					System.out.println(path_send);
 					nameFile = fileChooser.getSelectedFile().getName();
 					textPath.setText(path_send);
 				}
 			}
 		});
-		btnChoose.setBounds(498, 446, 33, 31);
 		btnChoose.setBorder(BorderFactory.createEmptyBorder());
 		btnChoose.setContentAreaFilled(false);
-		frame.getContentPane().add(btnChoose);
 
-		Label label = new Label("Path : ");
-		label.setBounds(6, 455, 49, 22);
-		frame.getContentPane().add(label);
+		btnUpLoad = new JButton(new ImageIcon(this.getClass().getResource(
+				"/Upload_file.png")));
+		btnUpLoad.setBounds(498, 21, 25, 25);
+		panelFile.add(btnUpLoad);
 
-		textPath = new JTextField("");
-		textPath.setEditable(false);
-		textPath.setColumns(10);
-		textPath.setBounds(61, 449, 428, 28);
-		frame.getContentPane().add(textPath);
+		btnUpLoad.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if (isSendFile)
+					try {
+						chat.sendMessage(EnCode.sendFile(nameFile));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+			}
+		});
+		btnUpLoad.setContentAreaFilled(false);
+		btnUpLoad.setBorder(BorderFactory.createEmptyBorder());
 
 		btnDel = new JButton(new ImageIcon(this.getClass().getResource(
-				"/Delete_icon.png")));
+				"/Delete_file.png")));
+		btnDel.setBounds(533, 21, 25, 25);
+		panelFile.add(btnDel);
 		btnDel.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent arg0) {
 				isSendFile = false;
@@ -229,21 +217,131 @@ public class ChatApp {
 		});
 		btnDel.setContentAreaFilled(false);
 		btnDel.setBorder(BorderFactory.createEmptyBorder());
-		btnDel.setBounds(541, 446, 33, 31);
-		frame.getContentPane().add(btnDel);
+
+		Label label = new Label("Path : ");
+		label.setBounds(10, 21, 49, 22);
+		panelFile.add(label);
+
+		panelMessage = new JPanel();
+		panelMessage.setBounds(6, 363, 568, 71);
+		panelMessage.setBorder(BorderFactory.createTitledBorder(
+				BorderFactory.createEtchedBorder(), "Message"));
+		frame.getContentPane().add(panelMessage);
+		panelMessage.setLayout(null);
+
+		textSend = new JTextField("");
+		textSend.setBounds(10, 21, 479, 39);
+		panelMessage.add(textSend);
+		textSend.setColumns(10);
+
+		btnSend = new JButton("SEND");
+		btnSend.setBounds(499, 29, 59, 23);
+		panelMessage.add(btnSend);
+		btnSend.addActionListener(new ActionListener() {
+
+			public void actionPerformed(ActionEvent arg0) {
+				if (isStop) {
+					updateChat("[ME]	:" + textSend.getText().toString());
+					textSend.setText("");
+					return;
+				}
+				String msg = textSend.getText();
+				if (msg.equals(""))
+					return;
+				try {
+					chat.sendMessage(EnCode.sendMessage(msg));
+					updateChat("[ME]	:" + msg);
+					textSend.setText("");
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		});
+
+		textSend.addKeyListener(new KeyListener() {
+
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+
+			}
+
+			@Override
+			public void keyReleased(KeyEvent arg0) {
+
+			}
+
+			@Override
+			public void keyPressed(KeyEvent arg0) {
+				if (arg0.getKeyCode() == KeyEvent.VK_ENTER) {
+					String msg = textSend.getText();
+					if (isStop) {
+						updateChat("[ME]	:" + textSend.getText().toString());
+						textSend.setText("");
+						return;
+					}
+					if (msg.equals("")) {
+						textSend.setText("");
+						textSend.setCaretPosition(0);
+						return;
+					}
+					try {
+						chat.sendMessage(EnCode.sendMessage(msg));
+						updateChat("[ME]	:" + msg);
+						textSend.setText("");
+						textSend.setCaretPosition(0);
+					} catch (Exception e) {
+						textSend.setText("");
+						textSend.setCaretPosition(0);
+					}
+				}
+			}
+		});
+
+		btnDisConnect = new JButton("CLOSE");
+		btnDisConnect.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				int result = Tags.show(frame, "Do you want close chat with "
+						+ nameGuest, true);
+				if (result == 0) {
+					try {
+						isStop = true;
+						frame.dispose();
+						chat.sendMessage(Tags.CHAT_CLOSE_TAG);
+						chat.stopChat();
+						System.gc();
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+		btnDisConnect.setBounds(461, 6, 113, 29);
+		frame.getContentPane().add(btnDisConnect);
+
+		progressSendFile = new JProgressBar(0, 100);
+		progressSendFile.setBounds(93, 510, 388, 14);
+		progressSendFile.setStringPainted(true);
+		frame.getContentPane().add(progressSendFile);
+		progressSendFile.setVisible(false);
 
 		textState = new Label("");
-		textState.setBounds(6, 477, 81, 22);
+		textState.setBounds(6, 502, 81, 22);
 		textState.setVisible(false);
 		frame.getContentPane().add(textState);
+
+		lblReceive = new Label("Receiving ...");
+		lblReceive.setBounds(491, 510, 83, 14);
+		lblReceive.setVisible(false);
+		frame.getContentPane().add(lblReceive);
+
 	}
 
 	public class ChatRoom extends Thread {
 
-		public Socket connect;
+		private Socket connect;
 		private ObjectOutputStream outPeer;
 		private ObjectInputStream inPeer;
-		private boolean continueSendFile = true;// , isSending = false;
+		private boolean continueSendFile = true, finishReceive = false;
 		private int sizeOfSend = 0, sizeOfData = 0, sizeFile = 0,
 				sizeReceive = 0;
 		private String nameFileReceive = "";
@@ -261,22 +359,29 @@ public class ChatApp {
 		public void run() {
 			super.run();
 			OutputStream out = null;
-			while (true) {
+			while (!isStop) {
 				try {
 					inPeer = new ObjectInputStream(connect.getInputStream());
 					Object obj = inPeer.readObject();
 					if (obj instanceof String) {
 						String msgObj = obj.toString();
+						if (msgObj.equals(Tags.CHAT_CLOSE_TAG)) {
+							isStop = true;
+							Tags.show(frame, nameGuest
+									+ " may be close chat with you!", false);
+							connect.close();
+							break;
+						}
 						if (DeCode.checkFile(msgObj)) {
 							isReceiveFile = true;
 							nameFileReceive = msgObj.substring(10,
 									msgObj.length() - 11);
 							int result = Tags.show(frame, nameGuest
-									+ " SEND FILE " + nameFileReceive
-									+ " FOR YOU", true);
+									+ " send file " + nameFileReceive
+									+ " for you", true);
 							if (result == 0) {
-								File fileReceive = new File(URL_DIR + "/"
-										+ nameFileReceive);
+								File fileReceive = new File(URL_DIR + TEMP
+										+ "/" + nameFileReceive);
 								if (!fileReceive.exists()) {
 									fileReceive.createNewFile();
 								}
@@ -289,12 +394,13 @@ public class ChatApp {
 							}
 						} else if (DeCode.checkFeedBack(msgObj)) {
 							btnChoose.setEnabled(false);
+							btnUpLoad.setEnabled(false);
 							btnDel.setEnabled(false);
 							new Thread(new Runnable() {
 								public void run() {
 									try {
 										sendMessage(Tags.FILE_DATA_BEGIN_TAG);
-										updateChat("YOU ARE SENDING FILE : "
+										updateChat("you are sending file : "
 												+ nameFile);
 										isSendFile = false;
 										sendFile(textPath.getText());
@@ -305,29 +411,27 @@ public class ChatApp {
 							}).start();
 						} else if (msgObj.equals(Tags.FILE_REQ_NOACK_TAG)) {
 							Tags.show(frame, nameGuest
-									+ " DO NOT RECEIVE YOUR FILE", false);
+									+ " wantn't receive file", false);
 						} else if (msgObj.equals(Tags.FILE_DATA_BEGIN_TAG)) {
-							out = new FileOutputStream(URL_DIR + "/"
+							finishReceive = false;
+							lblReceive.setVisible(true);
+							out = new FileOutputStream(URL_DIR + TEMP
 									+ nameFileReceive);
 						} else if (msgObj.equals(Tags.FILE_DATA_CLOSE_TAG)) {
-							updateChat("YOU RECEIVED FILE " + nameFileReceive);
-							updateChat(Integer.toString((sizeReceive) * 1024));
+							updateChat("You receive file " + nameFileReceive
+									+ " with total: " + sizeReceive + "KB");
+							sizeReceive = 0;
 							out.flush();
 							out.close();
-							/*
-							 * new Thread(new Runnable() {
-							 * 
-							 * @Override public void run() { JFileChooser
-							 * fileChooser = new JFileChooser();
-							 * fileChooser.setCurrentDirectory(new File(
-							 * System.getProperty("user.home"))); int result =
-							 * fileChooser .showOpenDialog(frame); fileChooser
-							 * .setFileSelectionMode
-							 * (JFileChooser.DIRECTORIES_ONLY); if (result ==
-							 * JFileChooser.APPROVE_OPTION) {
-							 * 
-							 * } } }).start();
-							 */
+							lblReceive.setVisible(false);
+							new Thread(new Runnable() {
+
+								@Override
+								public void run() {
+									showSaveFile();
+								}
+							}).start();
+							finishReceive = true;
 						} else {
 							String message = DeCode.getMessage(msgObj);
 							updateChat("[" + nameGuest + "]	:" + message);
@@ -338,7 +442,10 @@ public class ChatApp {
 						out.write(data.data);
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					File fileTemp = new File(URL_DIR + TEMP + nameFileReceive);
+					if (fileTemp.exists() && !finishReceive) {
+						fileTemp.delete();
+					}
 				}
 			}
 		}
@@ -348,7 +455,6 @@ public class ChatApp {
 			if (fileData.exists()) {
 				sizeOfSend = 0;
 				dataFile = new DataFile();
-				// isSending = true;
 				sizeFile = (int) fileData.length();
 				sizeOfData = sizeFile % 1024 == 0 ? (int) (fileData.length() / 1024)
 						: (int) (fileData.length() / 1024) + 1;
@@ -362,7 +468,6 @@ public class ChatApp {
 		public void sendFile(String path) throws Exception {
 			getData(path);
 			textState.setText("Sending ...");
-
 			do {
 				if (continueSendFile) {
 					continueSendFile = false;
@@ -389,10 +494,10 @@ public class ChatApp {
 									isSendFile = false;
 									textPath.setText("");
 									btnChoose.setEnabled(true);
+									btnUpLoad.setEnabled(true);
 									btnDel.setEnabled(true);
 									updateChat("... SUCCESSFUL");
 									inFileSend.close();
-									// isSending = false;
 								}
 								continueSendFile = true;
 							} catch (Exception e) {
@@ -404,14 +509,52 @@ public class ChatApp {
 			} while (sizeOfSend < sizeOfData);
 		}
 
+		private void showSaveFile() {
+			while (true) {
+				JFileChooser fileChooser = new JFileChooser();
+				fileChooser.setCurrentDirectory(new File(System
+						.getProperty("user.home")));
+				fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+				int result = fileChooser.showSaveDialog(frame);
+				if (result == JFileChooser.APPROVE_OPTION) {
+					File file = new File(fileChooser.getSelectedFile()
+							.getAbsolutePath());
+					if (!file.exists()) {
+						try {
+							file.createNewFile();
+							Thread.sleep(1000);
+							InputStream input = new FileInputStream(URL_DIR
+									+ TEMP + nameFileReceive);
+							OutputStream output = new FileOutputStream(
+									file.getAbsolutePath());
+							copyFileReceive(input, output, URL_DIR + TEMP
+									+ nameFileReceive);
+						} catch (Exception e) {
+							Tags.show(frame, "Your file receive has error!",
+									false);
+						}
+						break;
+					} else {
+						int resultContinue = Tags.show(frame,
+								"File is exists. You want save file?", true);
+						if (resultContinue == 0)
+							continue;
+						else
+							break;
+					}
+				}
+			}
+		}
+
 		public synchronized void sendMessage(Object obj) throws Exception {
 			outPeer = new ObjectOutputStream(connect.getOutputStream());
 			if (obj instanceof String) {
 				String message = obj.toString();
-				if (!isSendFile && !isReceiveFile) {
-					message = EnCode.sendMessage(obj.toString());
-					updateChat("[ME]	:" + obj.toString());
-				}
+				/*
+				 * if (!isSendFile && !isReceiveFile && !isStop) { //message =
+				 * EnCode.sendMessage(obj.toString()); updateChat("[ME]	:" +
+				 * obj.toString()); }
+				 */
 				outPeer.writeObject(message);
 				outPeer.flush();
 				if (isReceiveFile)
@@ -421,10 +564,18 @@ public class ChatApp {
 				outPeer.flush();
 			}
 		}
+
+		public void stopChat() {
+			try {
+				connect.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	public void copyFileReceive(InputStream inputStr, OutputStream outputStr,
-			String path) throws Exception {
+			String path) throws IOException {
 		byte[] buffer = new byte[1024];
 		int lenght;
 		while ((lenght = inputStr.read(buffer)) > 0) {

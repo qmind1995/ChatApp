@@ -22,10 +22,9 @@ public class DeCode {
 
 	private static Pattern request = Pattern
 			.compile(Tags.SESSION_KEEP_ALIVE_OPEN_TAG + Tags.PEER_NAME_OPEN_TAG
-					+ "[^" + Tags.PEER_NAME_CLOSE_TAG + "]+"
-					+ Tags.STATUS_OPEN_TAG + Tags.STATUS_CLOSE_TAG + "("
-					+ Tags.SERVER_ONLINE + "|" + Tags.SERVER_OFFLINE + ")"
-					+ Tags.PEER_NAME_CLOSE_TAG
+					+ "[^<>]+" + Tags.PEER_NAME_CLOSE_TAG
+					+ Tags.STATUS_OPEN_TAG + "(" + Tags.SERVER_ONLINE + "|"
+					+ Tags.SERVER_OFFLINE + ")" + Tags.STATUS_CLOSE_TAG
 					+ Tags.SESSION_KEEP_ALIVE_CLOSE_TAG);
 
 	private static Pattern message = Pattern.compile(Tags.CHAT_MSG_OPEN_TAG
@@ -107,25 +106,19 @@ public class DeCode {
 
 	public static ArrayList<DataPeer> updatePeerOnline(
 			ArrayList<DataPeer> peerList, String msg) {
-		Pattern alive = Pattern.compile("[^" + Tags.SERVER_ONLINE + "]+" + "["
-				+ Tags.SERVER_ONLINE + "]" + "[^" + Tags.SERVER_ONLINE + "]+");
-		Pattern killUser = Pattern.compile(Tags.PEER_NAME_OPEN_TAG + "[^"
-				+ Tags.PEER_NAME_CLOSE_TAG + "]+" + Tags.PEER_NAME_CLOSE_TAG
-				+ Tags.STATUS_OPEN_TAG + Tags.SERVER_OFFLINE
-				+ Tags.STATUS_CLOSE_TAG);
+		Pattern alive = Pattern.compile(Tags.STATUS_OPEN_TAG
+				+ Tags.SERVER_ONLINE + Tags.STATUS_CLOSE_TAG);
+		Pattern killUser = Pattern.compile(Tags.PEER_NAME_OPEN_TAG + "[^<>]*"
+				+ Tags.PEER_NAME_CLOSE_TAG);
 		if (request.matcher(msg).matches()) {
-			Matcher findUser = killUser.matcher(msg);
-			if (alive.matcher(msg).matches())
+			Matcher findState = alive.matcher(msg);
+			if (findState.find())
 				return peerList;
-			else if (findUser.find()) {
-				String findPeer = findUser.group(0);
+			findState = killUser.matcher(msg);
+			if (findState.find()) {
+				String findPeer = findState.group(0);
 				int size = peerList.size();
-				int lenght = findPeer.length() - 1
-						- Tags.STATUS_CLOSE_TAG.length()
-						- Tags.SERVER_OFFLINE.length()
-						- Tags.STATUS_OPEN_TAG.length()
-						- Tags.PEER_NAME_CLOSE_TAG.length();
-				String name = findPeer.substring(11, lenght);
+				String name = findPeer.substring(11, findPeer.length() - 12);
 				for (int i = 0; i < size; i++)
 					if (name.equals(peerList.get(i).getName())) {
 						peerList.remove(i);
